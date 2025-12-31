@@ -1,38 +1,45 @@
-import {useEffect, useState} from "react";
+import { useState } from "react";
 import { Chessboard } from "react-chessboard";
-import { getGameState, makeMove, resetGame } from "../services/api";
+import { makePlayerMove, resetGame } from "../services/api";
 
 export default function ChessBoard() {
-    const [fen, setFen] = useState("start");
-    const[status, setStatus] = useState("");
+  const [fen, setFen] = useState("start");
+  const [difficulty, setDifficulty] = useState("easy");
 
-    useEffect(() => {
-        loadGame();
-
-}, []);
-
-const loadGame = async () => {
-    const res = await getGameState();
-    setFen(res.data.fen);
-};
-
-const onDrop = async (sourceSquare, targetSquare) => {
+  const onDrop = async (from, to) => {
     try {
-        const res = await makeMove(sourceSquare, targetSquare);
-        setFen(res.data.fen);
-        setStatus("");
-        return true;
-    } catch(err) {
-        setStatus("Illegal move")
-        return false;
+      const res = await makePlayerMove(from, to, difficulty);
+      setFen(res.data.fen);
+      return true;
+    } catch {
+      return false;
     }
-};
+  };
 
-return (
+  const reset = async () => {
+    const res = await resetGame();
+    setFen(res.data.fen);
+  };
+
+  return (
     <div>
-        <Chessboard position={fen} onPieceDrop={onDrop}/>
-        <p style={{ color: "red" }}>{status}</p>
-    </div>
-);
+      <label>
+        Difficulty:{" "}
+        <select
+          value={difficulty}
+          onChange={(e) => setDifficulty(e.target.value)}
+        >
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </label>
 
+      <Chessboard position={fen} onPieceDrop={onDrop} />
+
+      <button onClick={reset} style={{ marginTop: "10px" }}>
+        Reset Game
+      </button>
+    </div>
+  );
 }

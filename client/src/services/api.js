@@ -1,11 +1,10 @@
 import axios from "axios";
 
 const API = axios.create({
-    baseURL: "http://localhost:5001/api",
+  baseURL: "http://localhost:5001/api",
 });
 
-export const getGameState = () => API.get("/game/state");
-export const makeMove = (from, to) =>
-    API.post("/game/move", { from, to });
+export const makePlayerMove = (from, to, difficulty) =>
+  API.post("/ai/move", { from, to, difficulty });
 
-export const resetGame = () => API.post("/game/reset");
+export const resetGame = () => API.post("/ai/reset");

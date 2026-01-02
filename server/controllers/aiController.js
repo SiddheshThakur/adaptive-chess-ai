@@ -1,38 +1,69 @@
 import { Chess } from "chess.js";
 import { getBestMove } from "../ai/minimax.js";
+import { evaluatePlayerMove } from "../ai/evaluateMove.js";
+import { updateDifficulty } from "../ai/difficultyManager.js";
 
 let game = new Chess();
 
-export const playerMove = (req, res) => {
-    const { from, to, difficulty } = req.body;
-    
-    const move = game.move({ from, to, promotion: "q" });
-
-    if(!move) {
-        return res.status(400).json({ error: "Invalid move" });
-    }
-
-    //AI move
-    if (!game.isGameOver()) {
-        const depthMap = {
-            easy: 2,
-            medium: 3,
-            hard: 4,
-        };
-
-        const depth = depthMap[difficulty] || 2;
-        const aiMove = getBestMove(game, depth);
-        if(aiMove) game.move(aiMove);
-    }
-
-    res.json({
-        fen: game.fen(),
-        isGameOver: game.isGameOver(),
-    });
-
+let playerStats = {
+  moves: 0,
+  totalAccuracy: 0,
+  blunders: 0,
 };
 
-    export const resetGame = (req, res) => {
-        game.reset();
-        res.json({fen: game.fen() });
+let difficulty = "easy";
+
+export const playerMove = (req, res) => {
+  const { from, to } = req.body;
+
+  const beforeMove = new Chess(game.fen());
+  const move = game.move({ from, to, promotion: "q" });
+
+  if (!move) {
+    return res.status(400).json({ error: "Illegal move" });
+  }
+
+  const afterMove = new Chess(game.fen());
+  const evaluation = evaluatePlayerMove(beforeMove, afterMove);
+
+  // update stats
+  playerStats.moves += 1;
+  playerStats.totalAccuracy += evaluation.accuracy;
+  if (evaluation.blunder) playerStats.blunders += 1;
+
+  const avgAccuracy =
+    playerStats.totalAccuracy / playerStats.moves;
+
+  difficulty = updateDifficulty(
+    { accuracy: avgAccuracy, blunders: playerStats.blunders },
+    difficulty
+  );
+
+  // AI move
+  if (!game.isGameOver()) {
+    const depthMap = {
+      easy: 2,
+      medium: 3,
+      hard: 4,
     };
+
+    const aiMove = getBestMove(game, depthMap[difficulty]);
+    if (aiMove) game.move(aiMove);
+  }
+
+  res.json({
+    fen: game.fen(),
+    stats: {
+      accuracy: Math.round(avgAccuracy),
+      blunders: playerStats.blunders,
+      difficulty,
+    },
+  });
+};
+
+export const resetGame = (req, res) => {
+  game.reset();
+  playerStats = { moves: 0, totalAccuracy: 0, blunders: 0 };
+  difficulty = "easy";
+  res.json({ fen: game.fen() });
+};

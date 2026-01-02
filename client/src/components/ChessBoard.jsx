@@ -4,12 +4,17 @@ import { makePlayerMove, resetGame } from "../services/api";
 
 export default function ChessBoard() {
   const [fen, setFen] = useState("start");
-  const [difficulty, setDifficulty] = useState("easy");
+  const [stats, setStats] = useState({
+    accuracy: 0,
+    blunders: 0,
+    difficulty: "easy",
+  });
 
   const onDrop = async (from, to) => {
     try {
-      const res = await makePlayerMove(from, to, difficulty);
+      const res = await makePlayerMove(from, to);
       setFen(res.data.fen);
+      setStats(res.data.stats);
       return true;
     } catch {
       return false;
@@ -19,21 +24,14 @@ export default function ChessBoard() {
   const reset = async () => {
     const res = await resetGame();
     setFen(res.data.fen);
+    setStats({ accuracy: 0, blunders: 0, difficulty: "easy" });
   };
 
   return (
     <div>
-      <label>
-        Difficulty:{" "}
-        <select
-          value={difficulty}
-          onChange={(e) => setDifficulty(e.target.value)}
-        >
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
-      </label>
+      <h4>AI Difficulty: {stats.difficulty}</h4>
+      <p>Accuracy: {stats.accuracy}%</p>
+      <p>Blunders: {stats.blunders}</p>
 
       <Chessboard position={fen} onPieceDrop={onDrop} />
 

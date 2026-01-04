@@ -8,6 +8,7 @@ export default function ChessBoard() {
     accuracy: 0,
     blunders: 0,
     difficulty: "easy",
+    skill: "Beginner",
   });
 
   const onDrop = async (from, to) => {
@@ -24,12 +25,18 @@ export default function ChessBoard() {
   const reset = async () => {
     const res = await resetGame();
     setFen(res.data.fen);
-    setStats({ accuracy: 0, blunders: 0, difficulty: "easy" });
+    setStats({
+      accuracy: 0,
+      blunders: 0,
+      difficulty: "easy",
+      skill: "Beginner",
+    });
   };
 
   return (
     <div>
-      <h4>AI Difficulty: {stats.difficulty}</h4>
+      <h4>Detected Skill: {stats.skill}</h4>
+      <p>AI Difficulty: {stats.difficulty}</p>
       <p>Accuracy: {stats.accuracy}%</p>
       <p>Blunders: {stats.blunders}</p>
 

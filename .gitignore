@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Builds
+build/
+dist/
+.out/
+.next/
+.next-cache/
+**/build/
+**/dist/
+
+# Env and secrets
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS/editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Misc
+coverage/
+.tmp/
+.cache/
+**/.parcel-cache/
+
+# Lock files (optional to ignore in monorepos)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

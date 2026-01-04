@@ -2,6 +2,7 @@ import { Chess } from "chess.js";
 import { getBestMove } from "../ai/minimax.js";
 import { evaluatePlayerMove } from "../ai/evaluateMove.js";
 import { updateDifficulty } from "../ai/difficultyManager.js";
+import { loadSkillModel, predictSkill } from "../ai/skillModel.js";
 
 let game = new Chess();
 
@@ -12,6 +13,9 @@ let playerStats = {
 };
 
 let difficulty = "easy";
+
+// load ML model once
+await loadSkillModel();
 
 export const playerMove = (req, res) => {
   const { from, to } = req.body;
@@ -26,7 +30,6 @@ export const playerMove = (req, res) => {
   const afterMove = new Chess(game.fen());
   const evaluation = evaluatePlayerMove(beforeMove, afterMove);
 
-  // update stats
   playerStats.moves += 1;
   playerStats.totalAccuracy += evaluation.accuracy;
   if (evaluation.blunder) playerStats.blunders += 1;
@@ -51,12 +54,19 @@ export const playerMove = (req, res) => {
     if (aiMove) game.move(aiMove);
   }
 
+  const skill = predictSkill({
+    accuracy: avgAccuracy,
+    blunders: playerStats.blunders,
+    moves: playerStats.moves,
+  });
+
   res.json({
     fen: game.fen(),
     stats: {
       accuracy: Math.round(avgAccuracy),
       blunders: playerStats.blunders,
       difficulty,
+      skill,
     },
   });
 };

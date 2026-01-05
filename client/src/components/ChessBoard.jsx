@@ -11,7 +11,15 @@ export default function ChessBoard() {
     skill: "Beginner",
   });
 
-  const onDrop = async (from, to) => {
+  const onDrop = async (from, to, piece) => {
+    // Only allow the human to play white pieces on white's turn.
+    const isWhitePiece = typeof piece === "string" && piece.startsWith("w");
+    const whiteToMove = fen === "start" ? true : fen.includes(" w ");
+
+    if (!isWhitePiece || !whiteToMove) {
+      return false;
+    }
+
     try {
       const res = await makePlayerMove(from, to);
       setFen(res.data.fen);

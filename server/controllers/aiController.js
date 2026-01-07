@@ -18,14 +18,17 @@ let difficulty = "easy";
 await loadSkillModel();
 
 export const playerMove = (req, res) => {
-  const { from, to } = req.body;
+  const { from, to, promotion = "q" } = req.body;
 
   const beforeMove = new Chess(game.fen());
-  const move = game.move({ from, to, promotion: "q" });
+  const move = game.move({ from, to, promotion });
 
   if (!move) {
     return res.status(400).json({ error: "Illegal move" });
   }
+
+  // Store the move notation
+  const playerMoveNotation = move.san;
 
   const afterMove = new Chess(game.fen());
   const evaluation = evaluatePlayerMove(beforeMove, afterMove);
@@ -42,16 +45,21 @@ export const playerMove = (req, res) => {
     difficulty
   );
 
+  let aiMoveNotation = null;
+
   // AI move
   if (!game.isGameOver()) {
     const depthMap = {
-      easy: 2,
-      medium: 3,
-      hard: 4,
+      easy: 3,
+      medium: 4,
+      hard: 5,
     };
 
     const aiMove = getBestMove(game, depthMap[difficulty]);
-    if (aiMove) game.move(aiMove);
+    if (aiMove) {
+      const moveObj = game.move(aiMove);
+      aiMoveNotation = moveObj ? moveObj.san : null;
+    }
   }
 
   const skill = predictSkill({
@@ -68,6 +76,7 @@ export const playerMove = (req, res) => {
       difficulty,
       skill,
     },
+    moveNotation: aiMoveNotation || playerMoveNotation,
   });
 };
 

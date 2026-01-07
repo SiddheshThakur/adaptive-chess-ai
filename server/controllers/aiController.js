@@ -4,6 +4,8 @@ import { evaluatePlayerMove } from "../ai/evaluateMove.js";
 import { updateDifficulty } from "../ai/difficultyManager.js";
 import { loadSkillModel, predictSkill } from "../ai/skillModel.js";
 
+
+// game
 let game = new Chess();
 
 let playerStats = {

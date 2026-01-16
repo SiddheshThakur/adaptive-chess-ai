@@ -11,6 +11,8 @@ export default function ChessBoard() {
     blunders: 0,
     difficulty: "easy",
     skill: "Beginner",
+    moves: 0,
+    totalAccuracy: 0,
   });
   const [thinking, setThinking] = useState(false);
   const [gameOver, setGameOver] = useState(null);
@@ -27,7 +29,7 @@ export default function ChessBoard() {
   useEffect(() => {
     if (fen !== "start") {
       const game = new Chess(fen);
-      
+
       // Check for game over
       if (game.isGameOver()) {
         let result = "";
@@ -57,7 +59,7 @@ export default function ChessBoard() {
     setPlayerColor(color);
     setGameStarted(true);
     setMoveHistory([]);
-    
+
     // If player chose black, AI makes first move
     if (color === "black") {
       setThinking(true);
@@ -69,6 +71,8 @@ export default function ChessBoard() {
           blunders: 0,
           difficulty: "easy",
           skill: "Beginner",
+          moves: 0,
+          totalAccuracy: 0,
         });
       } catch (e) {
         console.error("Failed to start game", e);
@@ -83,6 +87,8 @@ export default function ChessBoard() {
         blunders: 0,
         difficulty: "easy",
         skill: "Beginner",
+        moves: 0,
+        totalAccuracy: 0,
       });
     }
   };
@@ -93,7 +99,7 @@ export default function ChessBoard() {
       square,
       verbose: true,
     });
-    
+
     if (moves.length === 0) {
       setOptionSquares({});
       return false;
@@ -121,7 +127,7 @@ export default function ChessBoard() {
 
     const game = new Chess(fen);
     const playerToMove = playerColor === "white" ? "w" : "b";
-    
+
     if (game.turn() !== playerToMove) return;
 
     // If no piece selected yet
@@ -186,18 +192,29 @@ export default function ChessBoard() {
 
     try {
       setThinking(true);
-      const res = await makePlayerMove(from, to, promotion);
+      const res = await makePlayerMove({
+        fen,
+        move: { from, to, promotion },
+        stats,
+        difficulty: stats.difficulty
+      });
+
       setFen(res.data.fen);
       setStats(res.data.stats);
-      
+
       // Add to move history
       if (res.data.moveNotation) {
         setMoveHistory((prev) => [...prev, res.data.moveNotation]);
       }
-      
+
       return true;
     } catch (e) {
       console.error("Move failed", e);
+      // If server returns the original FEN on error, use it to reset
+      if (e.response && e.response.data && e.response.data.fen) {
+        setFen(e.response.data.fen);
+      }
+      alert("AI failed to make a move. Please try again.");
       return false;
     } finally {
       setThinking(false);
@@ -209,7 +226,7 @@ export default function ChessBoard() {
 
     const game = new Chess(fen);
     const playerToMove = playerColor === "white" ? "w" : "b";
-    
+
     if (game.turn() !== playerToMove) return false;
 
     // Check if it's a pawn promotion
@@ -244,6 +261,8 @@ export default function ChessBoard() {
       blunders: 0,
       difficulty: "easy",
       skill: "Beginner",
+      moves: 0,
+      totalAccuracy: 0,
     });
     setGameOver(null);
     setMoveHistory([]);
@@ -284,8 +303,8 @@ export default function ChessBoard() {
               <div className="thinking-banner">🤔 AI is thinking...</div>
             ) : (
               <div className="turn-banner">
-                {playerColor === "white" && fen.includes(" w ") ? "Your turn" : 
-                 playerColor === "black" && fen.includes(" b ") ? "Your turn" : "AI's turn"}
+                {playerColor === "white" && fen.includes(" w ") ? "Your turn" :
+                  playerColor === "black" && fen.includes(" b ") ? "Your turn" : "AI's turn"}
               </div>
             )}
           </div>
@@ -297,6 +316,7 @@ export default function ChessBoard() {
               onSquareClick={onSquareClick}
               customSquareStyles={optionSquares}
               boardOrientation={playerColor}
+              arePiecesDraggable={!thinking && !gameOver}
             />
           </div>
 

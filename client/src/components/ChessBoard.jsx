@@ -214,7 +214,7 @@ export default function ChessBoard() {
       if (e.response && e.response.data && e.response.data.fen) {
         setFen(e.response.data.fen);
       }
-      alert("AI failed to make a move. Please try again.");
+      alert("AI disconnected! \n\nPlease ensure the SERVER is running on port 5001.\n(Run 'npm run dev' in the server folder)");
       return false;
     } finally {
       setThinking(false);

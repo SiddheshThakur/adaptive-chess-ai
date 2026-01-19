@@ -118,47 +118,6 @@ function evaluateBoard(game) {
         }
     }
 
-    // Mobility bonus
-    // Crucial fix: Clone game to avoid corrupting the main search state
-    // We cannot just swap turns on the main instance safely without full undo
-    const verboseMoves = game.moves({ verbose: true });
-    const whiteMoves = game.turn() === 'w' ? verboseMoves.length : 0;
-    const blackMoves = game.turn() === 'b' ? verboseMoves.length : 0;
-
-    // To estimate the other side's mobility without breaking the state, 
-    // we can either fully clone or just skip it for now to be safe. 
-    // Cloning is expensive but accurate. 
-    // A lighter approach for mobility is just counting current moves.
-    // However, to get the opponents moves we need to play a null move or switch turns.
-    // Since chess.js doesn't support null moves easily, and we want to be safe:
-
-    // Safe implementation: Clone for opponent mobility
-    try {
-        const minimalFen = game.fen();
-        const clone = new Chess(minimalFen);
-
-        // Force turn switch in clone to count opponent moves
-        // Note: manually constructing fen with swapped turn is risky if en passant/castling not handled
-        // but chess.js handles FEN parsing well.
-
-        const fenParts = minimalFen.split(' ');
-        fenParts[1] = fenParts[1] === 'w' ? 'b' : 'w';
-        const swappedFen = fenParts.join(' ');
-
-        // This 'swappedFen' might be invalid if the king is in check etc, 
-        // so we have to be careful. 
-        // A safer way is to rely on the side that JUST moved (who is not to move).
-        // But in minimax we maximize for 'isMaximizing' side.
-
-        // Let's simplify mobility:
-        // +10 for every move available to the CURRENT player evaluation is biased.
-
-        score += (game.turn() === 'w' ? 1 : -1) * verboseMoves.length * 5;
-
-    } catch (e) {
-        // Fallback if anything fails
-    }
-
     return score;
 }
 
@@ -200,7 +159,10 @@ function minimax(game, depth, alpha, beta, isMaximizing) {
 
 export function getBestMove(game, depth) {
     let bestMove = null;
-    let bestValue = -Infinity;
+    // If it's white's turn, we want to Maximize. If black's turn, Minimize.
+    const isMaximizingPlayer = game.turn() === 'w';
+
+    let bestValue = isMaximizingPlayer ? -Infinity : Infinity;
     const moves = game.moves();
 
     // Shuffle moves for variety
@@ -211,12 +173,21 @@ export function getBestMove(game, depth) {
 
     for (let move of moves) {
         game.move(move);
-        const moveValue = minimax(game, depth - 1, -Infinity, Infinity, false);
+        // If we are maximizing, the next level (opponent) will minimize, so we pass false.
+        // If we are minimizing, the next level (opponent) will maximize, so we pass true.
+        const moveValue = minimax(game, depth - 1, -Infinity, Infinity, !isMaximizingPlayer);
         game.undo();
 
-        if (moveValue > bestValue) {
-            bestValue = moveValue;
-            bestMove = move;
+        if (isMaximizingPlayer) {
+            if (moveValue > bestValue) {
+                bestValue = moveValue;
+                bestMove = move;
+            }
+        } else {
+            if (moveValue < bestValue) {
+                bestValue = moveValue;
+                bestMove = move;
+            }
         }
     }
     return bestMove;

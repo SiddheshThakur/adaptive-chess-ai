@@ -25,3 +25,9 @@ Double-click the `start-game.bat` file in this folder. It will open two windows 
 - **Client**: React + Vite (Port 5173)
 - **Server**: Node.js + Express (Port 5001)
 - **AI**: Minimax algorithm running on the server.
+
+## Troubleshooting
+If the game doesn't load or verify connection:
+1. Ensure both terminal windows from `start-game.bat` are open.
+2. If "AI Disconnected" appears, restart the server.
+
